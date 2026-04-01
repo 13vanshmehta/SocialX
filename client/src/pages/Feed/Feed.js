@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Box, Typography, Avatar, IconButton, CircularProgress, LinearProgress } from '@mui/material';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
 import PostCard from '../../components/post/PostCard';
 import postService from '../../services/postService';

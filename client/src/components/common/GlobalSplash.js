@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import axios from 'axios';
 import { API_BASE_URL } from '../../config/api';

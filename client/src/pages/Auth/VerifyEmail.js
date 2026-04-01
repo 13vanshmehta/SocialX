@@ -14,7 +14,7 @@ import {
   IconButton,
   CircularProgress,
 } from '@mui/material';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/AuthContext';
 import { useSnackbar } from '../../context/SnackbarContext';

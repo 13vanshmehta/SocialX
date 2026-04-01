@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Button } from '@mui/material';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../config/constants';
 

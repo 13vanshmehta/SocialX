@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Avatar, IconButton, Button, CircularProgress } from '@mui/material';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';

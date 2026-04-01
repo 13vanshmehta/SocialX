@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Box, Typography, Avatar, IconButton, TextField, Button, CircularProgress } from '@mui/material';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';

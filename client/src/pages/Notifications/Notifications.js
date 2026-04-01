@@ -3,7 +3,7 @@ import {
   Box, Typography, Avatar, List, ListItem, ListItemAvatar, 
   ListItemText, CircularProgress, IconButton, Container
 } from '@mui/material';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import notificationService from '../../services/notificationService';
 import { useNavigate } from 'react-router-dom';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';

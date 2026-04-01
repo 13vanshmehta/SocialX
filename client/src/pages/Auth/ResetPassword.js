@@ -16,7 +16,7 @@ import {
   Link,
 } from '@mui/material';
 import { Visibility, VisibilityOff, LockOutlined } from '@mui/icons-material';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { useSnackbar } from '../../context/SnackbarContext';
 import authService from '../../services/authService';
