@@ -21,6 +21,7 @@ const authRoutes = require('./routes/auth.routes');
 const healthRoutes = require('./routes/health.routes');
 
 const app = express();
+app.set('trust proxy', 1); // ✅ Trust Render's proxy for HTTPS redirects
 const PORT = process.env.PORT || 5000;
 
 // ==========================================
