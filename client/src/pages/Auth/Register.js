@@ -123,7 +123,7 @@ const Register = () => {
   };
 
   const handleGoogleSignup = () => {
-    const googleAuthUrl = `${process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api'}/auth/google`;
+    const googleAuthUrl = `${process.env.REACT_APP_API_BASE_URL || ''}/auth/google`;
     window.location.href = googleAuthUrl;
   };
 
