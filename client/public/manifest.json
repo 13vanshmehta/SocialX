@@ -1,0 +1,31 @@
+{
+  "short_name": "SocialX",
+  "name": "SocialX — Connect & Share",
+  "description": "A modern social media platform. Connect, share, and discover amazing content.",
+  "icons": [
+    {
+      "src": "app-logo/icon-64.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0A0A1A",
+  "background_color": "#0A0A1A",
+  "scope": "/",
+  "categories": ["social"]
+}
