@@ -9,7 +9,7 @@ exports.createPost = async (req, res) => {
 
     if (req.files && req.files.length > 0) {
       images = req.files.map((file) => ({
-        url: `/uploads/${file.filename}`,
+        url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
       }));
     }
 

@@ -233,9 +233,20 @@ const PostCard = ({ post: initialPost, onLike, onDeletePost }) => {
 
       {/* Images */}
       {post.images && post.images.length > 0 && (
-        <Box sx={{ display: 'flex', gap: 1, mb: 2, borderRadius: '20px', overflow: 'hidden', maxHeight: 300 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 2, borderRadius: '20px', overflow: 'hidden' }}>
           {post.images.map((img, index) => (
-            <Box key={index} component="img" src={img.url.startsWith('http') ? img.url : `${serverUrl}${img.url}`} sx={{ flex: 1, width: '100%', height: '100%', objectFit: 'cover', minHeight: 200 }} />
+            <Box 
+              key={index} 
+              component="img" 
+              src={img.url.startsWith('http') || img.url.startsWith('data:') ? img.url : `${serverUrl}${img.url}`} 
+              sx={{ 
+                width: '100%', 
+                height: 'auto', 
+                objectFit: 'contain',
+                display: 'block',
+                borderRadius: '16px'
+              }} 
+            />
           ))}
         </Box>
       )}

@@ -80,12 +80,7 @@ app.use('/api/auth/', authLimiter);
 app.use(passport.initialize());
 passportConfig(passport);
 
-// Static file serving (for uploads)
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
-
-// ==========================================
 // Routes
-// ==========================================
 const postRoutes = require('./routes/post.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const userRoutes = require('./routes/user.routes');
