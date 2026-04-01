@@ -293,6 +293,23 @@ exports.refreshToken = async (req, res) => {
 };
 
 // ==========================================
+// Logout
+// ==========================================
+exports.logout = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (refreshToken) {
+      await User.findByIdAndUpdate(req.user.id, {
+        $pull: { refreshTokens: { token: refreshToken } }
+      });
+    }
+    res.status(200).json({ success: true, message: 'Logged out successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Logout failed.' });
+  }
+};
+
+// ==========================================
 // Forgot Password (Send OTP)
 // ==========================================
 exports.forgotPassword = async (req, res) => {

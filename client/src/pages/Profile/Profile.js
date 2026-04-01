@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Avatar, IconButton, Button, CircularProgress } from '@mui/material';
+import { Box, Typography, Avatar, IconButton, Button, CircularProgress, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { motion } from 'framer-motion';
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
@@ -10,15 +10,41 @@ import BookmarkBorderRoundedIcon from '@mui/icons-material/BookmarkBorderRounded
 
 import PostCard from '../../components/post/PostCard';
 import postService from '../../services/postService';
+import userService from '../../services/userService';
 import { useAuth } from '../../context/AuthContext';
 import { useSnackbar } from '../../context/SnackbarContext';
 
 const Profile = () => {
-  const { user } = useAuth();
-  const { showError } = useSnackbar();
+  const { user, logout } = useAuth();
+  const { showSuccess, showError } = useSnackbar();
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [settingsAnchor, setSettingsAnchor] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleLogout = () => {
+    setSettingsAnchor(null);
+    logout();
+    showSuccess('Successfully logged out.');
+  };
+
+  const handleDeleteAccount = () => {
+    setSettingsAnchor(null);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteAccount = async () => {
+    try {
+      await userService.deleteAccount();
+      setDeleteDialogOpen(false);
+      logout();
+      showSuccess('Account deleted successfully.');
+    } catch (error) {
+      showError('Failed to delete account.');
+      setDeleteDialogOpen(false);
+    }
+  };
 
 
 
@@ -117,6 +143,7 @@ const Profile = () => {
              </Button>
              <Button
                 fullWidth
+                onClick={(e) => setSettingsAnchor(e.currentTarget)}
                 sx={{
                   borderRadius: '8px', textTransform: 'none', fontWeight: 600,
                   fontSize: '0.9rem', color: '#1A1A1A', bgcolor: '#F5F5F5',
@@ -125,6 +152,19 @@ const Profile = () => {
              >
                 Settings
              </Button>
+             <Menu
+               anchorEl={settingsAnchor}
+               open={Boolean(settingsAnchor)}
+               onClose={() => setSettingsAnchor(null)}
+               PaperProps={{ sx: { borderRadius: '12px', minWidth: 160 } }}
+             >
+               <MenuItem onClick={handleLogout} sx={{ gap: 1.5, py: 1.2 }}>
+                  Logout
+               </MenuItem>
+               <MenuItem onClick={handleDeleteAccount} sx={{ gap: 1.5, py: 1.2, color: 'error.main' }}>
+                  Delete Account
+               </MenuItem>
+             </Menu>
           </Box>
         </Box>
 
@@ -186,6 +226,49 @@ const Profile = () => {
           </Box>
         )}
       </Box>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        PaperProps={{
+          sx: { borderRadius: '20px', p: 1, maxWidth: '400px' }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, textAlign: 'center', pt: 3 }}>
+          Delete Account?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ textAlign: 'center', color: '#666' }}>
+            Are you sure you want to delete your account? This action is permanent and all your data will be lost.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 3, pt: 1 }}>
+          <Button 
+            onClick={() => setDeleteDialogOpen(false)}
+            sx={{ 
+              color: '#333', bgcolor: '#F5F5F5', px: 3, borderRadius: '10px',
+              textTransform: 'none', fontWeight: 600,
+              '&:hover': { bgcolor: '#EEEEEE' }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={confirmDeleteAccount}
+            variant="contained"
+            color="error"
+            sx={{ 
+              bgcolor: '#FF5252', px: 3, borderRadius: '10px',
+              textTransform: 'none', fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(255, 82, 82, 0.2)',
+              '&:hover': { bgcolor: '#FF3D3D' }
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
     </Box>
   );
