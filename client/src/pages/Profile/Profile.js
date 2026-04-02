@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Box, Typography, Avatar, IconButton, Button, CircularProgress, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { motion } from 'framer-motion';
 import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
@@ -20,8 +20,27 @@ const Profile = () => {
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const [totalPosts, setTotalPosts] = useState(0);
+
   const [settingsAnchor, setSettingsAnchor] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const observerRef = useRef();
+
+  const lastPostElementRef = useCallback(node => {
+    if (loading || isFetchingNextPage) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+
+    if (node) observerRef.current.observe(node);
+  }, [loading, isFetchingNextPage, hasMore]);
 
   const handleLogout = () => {
     setSettingsAnchor(null);
@@ -46,24 +65,31 @@ const Profile = () => {
     }
   };
 
-
-
   useEffect(() => {
-    fetchUserPosts();
+    fetchUserPosts(page, page > 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page]);
 
-  const fetchUserPosts = async () => {
+  const fetchUserPosts = async (pageNum, isLoadMore = false) => {
     try {
-      setLoading(true);
-      // Fetch specifically user's posts
-      const data = await postService.getUserPosts(); 
-      setPosts(data.posts);
+      if (isLoadMore) setIsFetchingNextPage(true);
+      else setLoading(true);
+
+      const data = await postService.getUserPosts(null, pageNum, 10); 
+      
+      if (isLoadMore) {
+        setPosts((prev) => [...prev, ...data.posts]);
+      } else {
+        setPosts(data.posts);
+      }
+      setTotalPosts(data.total);
+      setHasMore(data.hasMore);
     } catch (error) {
       console.error('Failed to load profile posts:', error);
       showError('Failed to load your posts.');
     } finally {
       setLoading(false);
+      setIsFetchingNextPage(false);
     }
   };
 
@@ -174,7 +200,7 @@ const Profile = () => {
           py: 2, mb: 3, bgcolor: '#FFFFFF', boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
         }}>
           <Box sx={{ flex: 1, textAlign: 'center', borderRight: '1px solid #F0F0F0' }}>
-            <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#1A1A1A' }}>{posts.length}</Typography>
+            <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#1A1A1A' }}>{totalPosts}</Typography>
             <Typography sx={{ fontSize: '0.8rem', color: '#A0A0A0' }}>Total Post</Typography>
           </Box>
           <Box sx={{ flex: 1, textAlign: 'center', borderRight: '1px solid #F0F0F0' }}>
@@ -204,21 +230,45 @@ const Profile = () => {
 
       {/* Profile Posts List */}
       <Box sx={{ px: 2, pb: 4, bgcolor: '#FAFBFC' }}>
-        {loading ? (
+        {loading && posts.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
              <CircularProgress sx={{ color: '#FA587D' }} />
           </Box>
         ) : posts.length > 0 ? (
-          posts.map((post) => (
-            <motion.div
-              key={post._id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <PostCard post={post} currentUserId={user?._id || user?.id} onLike={handleLike} />
-            </motion.div>
-          ))
+          <>
+            {posts.map((post, index) => {
+              if (posts.length === index + 1) {
+                return (
+                  <motion.div
+                    key={post._id}
+                    ref={lastPostElementRef}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <PostCard post={post} currentUserId={user?._id || user?.id} onLike={handleLike} />
+                  </motion.div>
+                );
+              } else {
+                return (
+                  <motion.div
+                    key={post._id}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <PostCard post={post} currentUserId={user?._id || user?.id} onLike={handleLike} />
+                  </motion.div>
+                );
+              }
+            })}
+            
+            {isFetchingNextPage && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                <CircularProgress size={24} sx={{ color: '#FA587D' }} />
+              </Box>
+            )}
+          </>
         ) : (
           <Box sx={{ textAlign: 'center', py: 8, color: '#A0A0A0' }}>
             <Typography variant="h6">No posts yet!</Typography>

@@ -17,6 +17,9 @@ const Feed = () => {
 
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
 
   // Pull-to-refresh state
   const [refreshing, setRefreshing] = useState(false);
@@ -24,15 +27,28 @@ const Feed = () => {
   const [isPulling, setIsPulling] = useState(false);
   const touchStartY = useRef(0);
   const scrollContainerRef = useRef(null);
+  const observerRef = useRef();
   
   // Notification menu state
   const [notifAnchorEl, setNotifAnchorEl] = useState(null);
   const isNotifOpen = Boolean(notifAnchorEl);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const lastPostElementRef = useCallback(node => {
+    if (loading || isFetchingNextPage) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    });
+
+    if (node) observerRef.current.observe(node);
+  }, [loading, isFetchingNextPage, hasMore]);
+
   useEffect(() => {
-    fetchPosts();
-    const fetchCount = async () => {
+    const fetchInitialCount = async () => {
       try {
         const res = await notificationService.getNotifications();
         setUnreadCount(res.unreadCount || 0);
@@ -40,24 +56,36 @@ const Feed = () => {
         console.error('Failed to fetch unread count', err);
       }
     };
-    fetchCount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchInitialCount();
   }, []);
 
-  const fetchPosts = async () => {
+  useEffect(() => {
+    fetchPosts(page, page > 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  const fetchPosts = async (pageNum, isLoadMore = false) => {
     try {
-      setLoading(true);
-      const data = await postService.getFeedPosts();
-      setPosts(data.posts);
+      if (isLoadMore) setIsFetchingNextPage(true);
+      else setLoading(true);
+
+      const data = await postService.getFeedPosts(pageNum, 10);
+      
+      if (isLoadMore) {
+        setPosts((prev) => [...prev, ...data.posts]);
+      } else {
+        setPosts(data.posts);
+      }
+      setHasMore(data.hasMore);
     } catch (error) {
       console.error('Failed to load feed:', error);
       showError('Failed to load posts.');
     } finally {
       setLoading(false);
+      setIsFetchingNextPage(false);
     }
   };
 
-  // Pull-to-refresh: silently re-fetch without full-page loader
   const handleNotifClick = (e) => setNotifAnchorEl(e.currentTarget);
   const handleNotifClose = () => {
     setNotifAnchorEl(null);
@@ -67,8 +95,10 @@ const Feed = () => {
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      const data = await postService.getFeedPosts();
+      setPage(1);
+      const data = await postService.getFeedPosts(1, 10);
       setPosts(data.posts);
+      setHasMore(data.hasMore);
     } catch (error) {
       console.error('Refresh failed:', error);
       showError('Failed to refresh posts.');
@@ -236,21 +266,51 @@ const Feed = () => {
 
       {/* Posts */}
       <Box sx={{ px: 2, pb: 2 }}>
-        {loading ? (
+        {loading && posts.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress sx={{ color: '#FA587D' }} />
           </Box>
         ) : posts.length > 0 ? (
-          posts.map((post) => (
-            <motion.div
-              key={post._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-            >
-              <PostCard post={post} currentUserId={user?._id || user?.id} onLike={handleLike} />
-            </motion.div>
-          ))
+          <>
+            {posts.map((post, index) => {
+              if (posts.length === index + 1) {
+                return (
+                  <motion.div
+                    key={post._id}
+                    ref={lastPostElementRef}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <PostCard post={post} currentUserId={user?._id || user?.id} onLike={handleLike} />
+                  </motion.div>
+                );
+              } else {
+                return (
+                  <motion.div
+                    key={post._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <PostCard post={post} currentUserId={user?._id || user?.id} onLike={handleLike} />
+                  </motion.div>
+                );
+              }
+            })}
+            
+            {isFetchingNextPage && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                <CircularProgress size={24} sx={{ color: '#FA587D' }} />
+              </Box>
+            )}
+            
+            {!hasMore && posts.length > 0 && (
+              <Typography sx={{ textAlign: 'center', color: '#A0A0A0', py: 4, fontStyle: 'italic', fontSize: '0.85rem' }}>
+                You've seen all typical posts. <br/> Check back later!
+              </Typography>
+            )}
+          </>
         ) : (
           <Box sx={{ textAlign: 'center', py: 10, color: '#A0A0A0' }}>
             <Typography variant="h6">No posts yet!</Typography>

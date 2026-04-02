@@ -57,9 +57,9 @@ exports.getFeedPosts = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 10;
     const startIndex = (page - 1) * limit;
 
-    // Fetch posts from other users (exclude current user)
-    // For now, since "friends/connections" are disabled, fetch all public posts from other users
-    const query = { user: { $ne: req.user.id }, visibility: 'public' };
+    // Fetch all public posts (including self)
+    const query = { visibility: 'public' };
+    const total = await Post.countDocuments(query);
 
     const posts = await Post.find(query)
       .populate('user', 'fullName username email avatar')
@@ -71,6 +71,8 @@ exports.getFeedPosts = async (req, res) => {
     res.status(200).json({
       success: true,
       count: posts.length,
+      total,
+      hasMore: startIndex + posts.length < total,
       posts,
     });
   } catch (error) {
@@ -86,8 +88,11 @@ exports.getUserPosts = async (req, res) => {
     const limit = parseInt(req.query.limit, 10) || 10;
     const startIndex = (page - 1) * limit;
 
+    const query = { user: userId };
+    const total = await Post.countDocuments(query);
+
     // Fetch posts created by the specific user
-    const posts = await Post.find({ user: userId })
+    const posts = await Post.find(query)
       .populate('user', 'fullName username email avatar')
       .populate('comments.user', 'fullName username email avatar')
       .sort({ createdAt: -1 })
@@ -97,6 +102,8 @@ exports.getUserPosts = async (req, res) => {
     res.status(200).json({
       success: true,
       count: posts.length,
+      total,
+      hasMore: startIndex + posts.length < total,
       posts,
     });
   } catch (error) {
