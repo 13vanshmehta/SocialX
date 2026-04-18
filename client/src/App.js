@@ -27,15 +27,22 @@ function App() {
   // Always show splash on page load / browser reload
   const [isBooting, setIsBooting] = React.useState(true);
 
-  // Setup periodic health check to keep Render free-tier backend awake
+  // Periodically verify backend availability for active/inactive status checks
   React.useEffect(() => {
-    // Ping every 10 minutes (600000ms)
-    // Render typically sleeps after 15 minutes of inactivity
-    const interval = setInterval(() => {
-      fetch(`${API_BASE_URL}/health-check`)
-        .then(res => res.json())
-        .catch(err => console.log('Keep-alive ping failed:', err));
-    }, 10 * 60 * 1000);
+    const healthCheck = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/health-check`);
+        if (!response.ok) {
+          console.warn('Backend health check failed:', response.status);
+        }
+      } catch (error) {
+        console.warn('Backend appears inactive/unreachable:', error);
+      }
+    };
+
+    // Check once on app load, then every 2 minutes
+    healthCheck();
+    const interval = setInterval(healthCheck, 2 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
