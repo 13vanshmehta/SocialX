@@ -16,6 +16,8 @@ import { ROUTES } from '../../config/constants';
 import postService from '../../services/postService';
 import { useSnackbar } from '../../context/SnackbarContext';
 
+const BRAND_GRADIENT = 'linear-gradient(135deg, #E84393 0%, #6C5CE7 50%, #0984E3 100%)';
+
 const CreatePost = () => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -100,7 +102,7 @@ const CreatePost = () => {
           disabled={isUploading || (!content.trim() && images.length === 0)}
           sx={{ 
             borderRadius: '20px', 
-            background: isUploading || (!content.trim() && images.length === 0) ? theme.palette.action.disabledBackground : theme.palette.accent.gradient,
+            background: isUploading || (!content.trim() && images.length === 0) ? theme.palette.action.disabledBackground : BRAND_GRADIENT,
             color: '#fff',
             px: 3,
             fontWeight: 600,
@@ -118,7 +120,7 @@ const CreatePost = () => {
       {/* Loading strip */}
       {isUploading && (
         <motion.div initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: 1.5, repeat: Infinity }}>
-          <Box sx={{ height: 3, background: theme.palette.accent.gradient }} />
+          <Box sx={{ height: 3, background: BRAND_GRADIENT }} />
         </motion.div>
       )}
 

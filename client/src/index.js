@@ -16,8 +16,8 @@ root.render(
   </React.StrictMode>
 );
 
-// Register the service worker for PWA offline support
-serviceWorkerRegistration.register();
+// Disable the service worker by default so production updates are not blocked by stale cached bundles.
+serviceWorkerRegistration.unregister();
 
 // Performance monitoring
 reportWebVitals();
