@@ -1,13 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { Box, Typography, Avatar, IconButton, TextField, Button, CircularProgress } from '@mui/material';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Box, Typography, Avatar, IconButton, TextField, Button, CircularProgress, useTheme, Tooltip } from '@mui/material';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import ArrowUpwardRoundedIcon from '@mui/icons-material/ArrowUpwardRounded';
-import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
-import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
+
+import AddPhotoAlternateOutlinedIcon from '@mui/icons-material/AddPhotoAlternateOutlined';
+import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined';
+import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
+import MoodOutlinedIcon from '@mui/icons-material/MoodOutlined';
 import PublicOutlinedIcon from '@mui/icons-material/PublicOutlined';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+
 import { useAuth } from '../../context/AuthContext';
 import { ROUTES } from '../../config/constants';
 import postService from '../../services/postService';
@@ -15,6 +18,7 @@ import { useSnackbar } from '../../context/SnackbarContext';
 
 const CreatePost = () => {
   const navigate = useNavigate();
+  const theme = useTheme();
   const { user } = useAuth();
   const { showSuccess, showError } = useSnackbar();
 
@@ -22,7 +26,6 @@ const CreatePost = () => {
   const [images, setImages] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   const fileInputRef = useRef(null);
 
@@ -56,13 +59,6 @@ const CreatePost = () => {
 
     try {
       setIsUploading(true);
-      // Faking progress for the UI effect seen in mockup
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 15;
-        if (progress > 90) clearInterval(interval);
-        setUploadProgress(Math.min(progress, 90));
-      }, 100);
 
       const formData = new FormData();
       formData.append('content', content);
@@ -71,189 +67,182 @@ const CreatePost = () => {
 
       await postService.createPost(formData);
 
-      clearInterval(interval);
-      setUploadProgress(100);
-
-      setTimeout(() => {
-        setIsUploading(false);
-        showSuccess('Post created successfully! 🎉');
-        navigate(ROUTES.PROFILE); // Re-route to profile so they can see their post
-      }, 500);
+      showSuccess('Post created successfully! 🎉');
+      navigate(ROUTES.PROFILE); // Re-route to profile so they can see their post
 
     } catch (error) {
       console.error('Create post failed:', error);
-      setIsUploading(false);
       showError('Failed to create post. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
-    <Box sx={{ width: '100%', minHeight: '100vh', pb: 10, bgcolor: '#FFFFFF' }}>
+    <Box sx={{ width: '100%', minHeight: '100vh', bgcolor: theme.palette.background.default, display: 'flex', flexDirection: 'column' }}>
       
-      {/* Uploading Progress Bar (if active) */}
-      <AnimatePresence>
-        {isUploading && (
-          <motion.div initial={{ y: -50 }} animate={{ y: 0 }} exit={{ y: -50 }}>
-            <Box sx={{ 
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-              px: 3, py: 1.5, m: 2, bgcolor: '#FFF0F5', borderRadius: '16px' 
-            }}>
-              <Typography sx={{ color: '#FA587D', fontWeight: 600, fontSize: '0.9rem' }}>
-                Post Uploading
-              </Typography>
-              <Typography sx={{ color: '#FA587D', fontWeight: 700 }}>
-                {uploadProgress}% <ArrowUpwardRoundedIcon sx={{ fontSize: 16, verticalAlign: 'middle' }} />
-              </Typography>
-            </Box>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, pt: 2, pb: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: '#1A1A1A' }}>
+      {/* 1. Sleek Header */}
+      <Box sx={{ 
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+        px: 2, py: 1.5, position: 'sticky', top: 0, zIndex: 10,
+        bgcolor: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(10px)',
+        borderBottom: `1px solid ${theme.palette.divider}`
+      }}>
+        <IconButton onClick={() => navigate(ROUTES.FEED)}>
+          <CloseRoundedIcon />
+        </IconButton>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: theme.palette.text.primary, fontSize: '1.1rem' }}>
           Create Post
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box sx={{ position: 'relative' }}>
-            <IconButton sx={{ color: '#1A1A1A' }}><NotificationsNoneRoundedIcon /></IconButton>
-            <Box sx={{
-              position: 'absolute', top: 8, right: 8, width: 8, height: 8, 
-              bgcolor: '#FA587D', borderRadius: '50%', border: '2px solid #FFF'
-            }} />
+        <Button 
+          variant="contained" 
+          onClick={handleSubmit}
+          disabled={isUploading || (!content.trim() && images.length === 0)}
+          sx={{ 
+            borderRadius: '20px', 
+            background: isUploading || (!content.trim() && images.length === 0) ? theme.palette.action.disabledBackground : theme.palette.accent.gradient,
+            color: '#fff',
+            px: 3,
+            fontWeight: 600,
+            textTransform: 'none',
+            boxShadow: 'none',
+            '&:disabled': {
+              color: 'rgba(255, 255, 255, 0.7)',
+            }
+          }}
+        >
+          {isUploading ? <CircularProgress size={20} color="inherit" /> : 'Post'}
+        </Button>
+      </Box>
+
+      {/* Loading strip */}
+      {isUploading && (
+        <motion.div initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: 1.5, repeat: Infinity }}>
+          <Box sx={{ height: 3, background: theme.palette.accent.gradient }} />
+        </motion.div>
+      )}
+
+      {/* Main Content Area */}
+      <Box sx={{ px: 2, py: 2, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+
+        {/* 2. User Info */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Avatar src={user?.avatar} sx={{ width: 44, height: 44, mr: 1.5 }} />
+          <Box>
+            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', color: theme.palette.text.primary }}>
+              {user?.fullName}
+            </Typography>
+            {/* Audience Selector */}
+            <Box sx={{ 
+              display: 'inline-flex', alignItems: 'center', px: 1, py: 0.25, mt: 0.5,
+              borderRadius: '12px', border: `1px solid ${theme.palette.divider}`, cursor: 'pointer' 
+            }}>
+              <PublicOutlinedIcon sx={{ fontSize: 14, color: theme.palette.text.secondary, mr: 0.5 }} />
+              <Typography sx={{ fontSize: '0.75rem', color: theme.palette.text.secondary, fontWeight: 500, mr: 0.5 }}>Public</Typography>
+              <ExpandMoreRoundedIcon sx={{ fontSize: 16, color: theme.palette.text.secondary }} />
+            </Box>
           </Box>
         </Box>
-      </Box>
 
-      {/* User Info & Audience Selector */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Avatar src={user?.avatar} sx={{ width: 48, height: 48, mr: 1.5 }} />
-          <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', color: '#1A1A1A' }}>
-            {user?.fullName}
-          </Typography>
-        </Box>
-
-        <Box sx={{ 
-          display: 'flex', alignItems: 'center', px: 1.5, py: 0.5, 
-          borderRadius: '20px', border: '1px solid #E0E0E0', cursor: 'pointer' 
-        }}>
-          <PublicOutlinedIcon sx={{ fontSize: 16, color: '#A0A0A0', mr: 0.5 }} />
-          <Typography sx={{ fontSize: '0.85rem', color: '#A0A0A0', fontWeight: 500, mr: 0.5 }}>Public</Typography>
-          <ExpandMoreRoundedIcon sx={{ fontSize: 18, color: '#A0A0A0' }} />
-        </Box>
-      </Box>
-
-      {/* Text Area */}
-      <Box sx={{ px: 2, mb: 3 }}>
+        {/* 3. Text Area */}
         <TextField
           fullWidth
           multiline
           minRows={3}
-          maxRows={10}
-          placeholder="Write something..."
+          placeholder="What's going on?"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          variant="standard"
           disabled={isUploading}
+          variant="standard"
           InputProps={{
             disableUnderline: true,
-            sx: { fontSize: '1.05rem', color: '#1A1A1A', lineHeight: 1.6 }
+            sx: { 
+              fontSize: '1.25rem', 
+              color: theme.palette.text.primary, 
+              lineHeight: 1.5,
+              pb: 2,
+              '&::placeholder': { color: theme.palette.text.disabled }
+            }
           }}
         />
-      </Box>
 
-      {/* Image Previews */}
-      {previewUrls.length > 0 && (
-        <Box sx={{ px: 2, mb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', color: '#1A1A1A' }}>
-              Selected Images
-            </Typography>
-            <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: '#FA587D', cursor: 'pointer' }}>
-              See More
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-             {previewUrls.map((url, index) => (
-                <Box key={index} sx={{ position: 'relative', width: '48%', paddingTop: '48%', borderRadius: '16px', overflow: 'hidden' }}>
-                   <Box component="img" src={url} sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                   <IconButton 
-                     onClick={() => removeImage(index)}
-                     sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.5)', color: '#FFF', p: 0.5, '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}
-                   >
-                     <CloseRoundedIcon sx={{ fontSize: 16 }} />
-                   </IconButton>
-                </Box>
-             ))}
-          </Box>
-        </Box>
-      )}
-
-      <input
-        type="file"
-        multiple
-        accept="image/*"
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        onChange={handleImageSelect}
-        disabled={isUploading}
-      />
-
-      {/* Add Media Button */}
-      <Box sx={{ px: 2, mb: 4 }}>
-        <Button
-          fullWidth
-          variant="outlined"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          sx={{
-            py: 1.5,
-            borderRadius: '24px',
-            borderColor: '#FA587D',
-            color: '#FA587D',
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: '1rem',
-            '&:hover': { backgroundColor: '#FFF0F5', borderColor: '#FA587D' }
-          }}
-        >
-          Add more image +
-        </Button>
-      </Box>
-
-      {/* Floating Action Menu row (Images) */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', px: 3, mb: 5 }}>
-        <IconButton sx={{ color: '#FA587D', bgcolor: '#FFF0F5', p: 2, '&:hover': { bgcolor: '#FFE0EB' } }} onClick={() => fileInputRef.current?.click()}><ImageOutlinedIcon sx={{ fontSize: 32 }} /></IconButton>
-      </Box>
-
-      {/* Big Submit/Cancel Button Overlay */}
-      <Box sx={{ position: 'fixed', bottom: 16, width: '100%', display: 'flex', justifyContent: 'center', zIndex: 1100 }}>
-        {content || images.length > 0 ? (
-          <Box
-            onClick={!isUploading ? handleSubmit : null}
-            sx={{
-              width: 64, height: 64, borderRadius: '50%', bgcolor: isUploading ? '#E0E0E0' : '#FA587D', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              boxShadow: isUploading ? 'none' : '0 8px 20px rgba(250, 88, 125, 0.4)',
-              transition: 'transform 0.2s', '&:active': { transform: 'scale(0.95)' }
-            }}
-          >
-             {isUploading ? <CircularProgress size={28} sx={{ color: '#FFF' }} /> : <ArrowUpwardRoundedIcon sx={{ color: '#FFF', fontSize: 32 }} />}
-          </Box>
-        ) : (
-          <Box
-            onClick={() => navigate(ROUTES.FEED)}
-            sx={{
-              width: 64, height: 64, borderRadius: '50%', bgcolor: '#FA587D', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              boxShadow: '0 8px 20px rgba(250, 88, 125, 0.4)',
-              transition: 'transform 0.2s', '&:active': { transform: 'scale(0.95)' }
-            }}
-          >
-             <CloseRoundedIcon sx={{ color: '#FFF', fontSize: 32 }} />
+        {/* 4. Media Preview Grid */}
+        {previewUrls.length > 0 && (
+          <Box sx={{ mb: 2, borderRadius: '16px', overflow: 'hidden', border: `1px solid ${theme.palette.divider}` }}>
+            <Box sx={{ 
+              display: 'grid', 
+              gap: '2px',
+              gridTemplateColumns: previewUrls.length === 1 ? '1fr' : '1fr 1fr',
+              gridTemplateRows: previewUrls.length >= 3 ? '1fr 1fr' : '1fr',
+            }}>
+              {previewUrls.map((url, index) => {
+                let gridSpan = {};
+                if (previewUrls.length === 3 && index === 0) gridSpan = { gridRow: 'span 2' };
+                return (
+                  <Box key={index} sx={{ position: 'relative', width: '100%', paddingTop: previewUrls.length === 1 ? '75%' : '100%', ...gridSpan }}>
+                    <Box component="img" src={url} sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <IconButton 
+                      onClick={() => removeImage(index)}
+                      size="small"
+                      sx={{ 
+                        position: 'absolute', top: 8, right: 8, 
+                        bgcolor: 'rgba(0,0,0,0.6)', color: '#FFF', 
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' },
+                        backdropFilter: 'blur(4px)'
+                      }}
+                    >
+                      <CloseRoundedIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Box>
+                );
+              })}
+            </Box>
           </Box>
         )}
+        
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleImageSelect}
+          disabled={isUploading}
+        />
+
+      </Box>
+
+      {/* 5. ToolBar at bottom (above keyboard conceptually) */}
+      <Box sx={{ px: 2, pb: 3, pt: 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
+        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: theme.palette.text.secondary, mb: 1.5 }}>
+          Add to your post
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Tooltip title="Photo/Video">
+            <IconButton 
+              onClick={() => fileInputRef.current?.click()} 
+              disabled={isUploading || images.length >= 5}
+              sx={{ color: theme.palette.primary.main, bgcolor: 'rgba(232,67,147,0.08)', '&:hover': { bgcolor: 'rgba(232,67,147,0.15)' } }}
+            >
+              <AddPhotoAlternateOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Tag People">
+            <IconButton disabled={isUploading} sx={{ color: theme.palette.secondary.main, bgcolor: 'rgba(9,132,227,0.08)', '&:hover': { bgcolor: 'rgba(9,132,227,0.15)' } }}>
+              <LocalOfferOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Feeling/Activity">
+            <IconButton disabled={isUploading} sx={{ color: '#F5A623', bgcolor: 'rgba(245,166,35,0.08)', '&:hover': { bgcolor: 'rgba(245,166,35,0.15)' } }}>
+              <MoodOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Check in">
+            <IconButton disabled={isUploading} sx={{ color: '#E74C3C', bgcolor: 'rgba(231,76,60,0.08)', '&:hover': { bgcolor: 'rgba(231,76,60,0.15)' } }}>
+              <LocationOnOutlinedIcon />
+            </IconButton>
+          </Tooltip>
+        </Box>
       </Box>
 
     </Box>
